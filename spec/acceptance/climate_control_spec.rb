@@ -113,6 +113,26 @@ describe "Climate control" do
     expect(ENV["BAZ"]).to be_nil
   end
 
+  it "handles scoping of threads correctly" do
+    baz_value = nil
+
+    thread_that_overrides_env = Thread.new {
+      with_modified_env BAZ: "buzz" do
+        sleep 3
+      end
+    }
+
+    separate_thread = Thread.new {
+      sleep 1
+      baz_value = ENV["BAZ"]
+    }
+
+    thread_that_overrides_env.join
+    separate_thread.join
+
+    expect(baz_value).to be_nil
+  end
+
   it "is re-entrant" do
     ret = with_modified_env(FOO: "foo") {
       with_modified_env(BAR: "bar") do
